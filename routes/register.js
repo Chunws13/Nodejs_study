@@ -1,6 +1,8 @@
 const express = require("express");
-const User = require("../schemas/user.js")
+const { Users } = require("../models");
+
 const router = express.Router();
+// const User = require("../schemas/user.js") db 변경으로 미사용
 
 const nicknameChecker = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{3,}$/;
 const passwordChecker = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{4,}$/;
@@ -8,9 +10,13 @@ const passwordChecker = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{4,}$/;
 router.post('/register', async(req, res) => {
     try {
         const { nickname, password, confirm } = req.body;
-        const userCheck = await User.find({ nickname })
+        const userCheck = await Users.findOne({
+            where: {
+                nickname: nickname
+            }
+        });
 
-        if (userCheck.length !== 0) {
+        if (userCheck) {
             return res.status(412).send({
                 errorMessage: "중복된 닉네임입니다."
             })
@@ -40,7 +46,7 @@ router.post('/register', async(req, res) => {
             });
         }
 
-        await User.create({ nickname, password })
+        await Users.create({ nickname, password })
         return res.status(201).send({
             message: "회원 가입에 성공하였습니다."
         })

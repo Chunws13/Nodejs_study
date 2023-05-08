@@ -1,14 +1,19 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const User = require("../schemas/user.js");
+const { Users } = require("../models");
 const router = express.Router();
+// const User = require("../schemas/user.js"); db 변경으로 인해 미사용
 
 router.post('/login', async(req, res) => {
     try {
         const { nickname, password } = req.body;
-        const userCheck = await User.findOne({ nickname });
+        const userCheck = await Users.findOne({
+            where: {
+                nickname: nickname
+            }
+        });
 
-        if (userCheck.length === 0 || userCheck.password !== password) {
+        if (!userCheck || userCheck.password !== password) {
             return res.status(412).send({
                 errorMessage: "닉네임 또는 패스워드를 확인해주세요"
             })

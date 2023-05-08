@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
-const User = require("../schemas/user.js");
+const { Users } = require("../models");
+// const User = require("../schemas/user.js");
 
 module.exports = async(req, res, next) => {
     try {
@@ -12,17 +13,17 @@ module.exports = async(req, res, next) => {
         }
         const [tokenType, tokenValue] = authorization.split(" ");
 
+        const { nickname } = jwt.verify(tokenValue, "keys");
+        const user = await Users.findOne({ where: { nickname: nickname } });
+
         // 인증 실패
-        if (tokenType !== 'Bearer') {
+        if (tokenType !== 'Bearer' || !user) {
             res.clearCookie('Authorization');
 
             return res.status(403).send({
                 errorMessage: "전달된 쿠키에서 오류가 발생했습니다."
             })
         }
-
-        const { nickname } = jwt.verify(tokenValue, "keys");
-        const user = await User.findOne({ nickname });
 
         res.locals.user = user;
         next();
