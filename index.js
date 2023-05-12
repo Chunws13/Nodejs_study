@@ -12,9 +12,6 @@ const posterRouter = require("./routes/poster.js")
 const app = express();
 const port = 3000;
 
-const { default: mongoose } = require("mongoose");
-connect();
-
 app.use(cookieParser());
 app.use(express.json());
 app.use("/api", [blogRouter, commentsRouter, registerRouter, loginRouter, posterRouter]);
@@ -22,7 +19,6 @@ app.use("/api", [blogRouter, commentsRouter, registerRouter, loginRouter, poster
 app.get('/', (req, res) => {
     res.send('This Website for nodejs study');
 })
-
 
 app.listen(port, () => {
     console.log(`Listening at ${port}`);

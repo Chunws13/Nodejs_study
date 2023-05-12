@@ -2,41 +2,47 @@ const express = require("express");
 const { Users, Blogs, Comments } = require("../models")
 const loginAuth = require("../middlewares/loginChecker.js")
 const router = express.Router();
-// const Blog = require("../schemas/blog.js");
-// const Comment = require("../schemas/blog.js");
 
 // 게시글 조회
 router.get('/post', async(req, res) => {
-    const contents = await Blogs.findAll({
-        attributes: ['title', 'createdAt'],
-        order: [
-            ['createdAt', 'DESC']
-        ],
-        include: [{
-            model: Users,
-            attributes: ['nickname']
-        }]
-    });
+    try {
+        const contents = await Blogs.findAll({
+            attributes: ['title', 'createdAt'],
+            order: [
+                ['createdAt', 'DESC']
+            ],
+            include: [{
+                model: Users,
+                attributes: ['nickname']
+            }]
+        });
 
-    return res.status(200).json({ data: contents })
+        return res.status(200).json({ data: contents })
+
+    } catch (error) {
+
+        return res.status(400).json({ errorMessage: "에러가 발생했습니다." })
+    }
 })
 
 // 게시글 상세 조회
 router.get('/posts/:_postId', async(req, res) => {
     const { _postId } = req.params;
-    const detailData = await Blogs.findOne({
-        attributes: ['title', 'content', 'createdAt'],
-        where: { postId: _postId },
-        include: [{
-            model: Users,
-            attributes: ['nickname']
-        }]
-    });
-
-    if (detailData) {
+    try {
+        const detailData = await Blogs.findOne({
+            attributes: ['title', 'content', 'createdAt'],
+            where: { postId: _postId },
+            include: [{
+                model: Users,
+                attributes: ['nickname']
+            }]
+        });
         return res.status(200).json({ data: detailData });
+
+    } catch (error) {
+
+        return res.status(400).json({ message: '페이지를 찾을 수 없습니다.' });
     }
-    return res.status(400).json({ message: '페이지를 찾을 수 없습니다.' });
 })
 
 // 게시글 작성
@@ -50,6 +56,7 @@ router.post('/post', loginAuth, async(req, res) => {
         return res.status(200).json({ data: blog });
 
     } catch (error) {
+
         res.status(400).json({ message: '데이터 형식이 올바르지 않습니다.' });
     }
 })
@@ -77,7 +84,8 @@ router.put('/posts/:_postId', loginAuth, async(req, res) => {
 
         const updateBlog = await Blogs.update({
             title: newTitle,
-            content: newContent
+            content: newContent,
+            updatedAt: new Date()
         }, {
             where: { UserId: userId }
         });
@@ -107,15 +115,7 @@ router.delete('/posts/:_postId', loginAuth, async(req, res) => {
             })
         }
 
-        // 기존 : 블로그 글 id 기준으로 댓글 삭제
-        // await Promise.all([
-        //     Blogs.deleteOne({ _id: _postId }),
-        //     Comment.delete({ postid: _postId })
-        // ])
-
-        // 신규 : Model CASCADE 관계이므로 별도 설정 필요 없음?
         await Blogs.destroy({ where: { postId: _postId } });
-
         return res.status(200).json({ message: "게시글을 삭제했습니다." });
 
     } catch (error) {
